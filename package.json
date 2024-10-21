@@ -6,21 +6,27 @@
     "build": "vinxi build",
     "start": "vinxi start",
     "version": "vinxi version",
-    "backend:dev": "tsx ./src/backend/index.ts"
+    "database:server": "tsx ./src/database/server.ts",
+    "database:mysql": "tsx ./src/database/mysql-connect.ts"
   },
   "dependencies": {
     "@sifrr/server": "^0.0.9",
     "@solidjs/meta": "^0.29.4",
-    "@solidjs/router": "^0.14.7",
-    "@solidjs/start": "^1.0.8",
-    "solid-js": "^1.9.1",
-    "uWebSockets.js": "github:uNetworking/uWebSockets.js#20.49.0",
+    "@solidjs/router": "^0.14.10",
+    "@solidjs/start": "^1.0.9",
+    "mysql2": "^3.11.3",
+    "pg": "^8.13.0",
+    "pg-hstore": "^2.3.4",
+    "sequelize": "^6.37.4",
+    "solid-js": "^1.9.2",
+    "uWebSockets.js": "github:uNetworking/uWebSockets.js#v20.49.0",
     "vinxi": "^0.4.3"
   },
   "engines": {
     "node": ">=18"
   },
   "devDependencies": {
+    "@types/node": "^22.7.7",
     "tsx": "^4.19.1"
   }
 }
