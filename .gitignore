@@ -25,5 +25,6 @@ app.config.timestamp_*.js
 gitignore
 
 # System Files
+~*
 .DS_Store
 Thumbs.db
