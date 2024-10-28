@@ -3,6 +3,7 @@
 import { App } from '@sifrr/server'
 
 const port = 3000
+const host = '0.0.0.0'
 
 const app = new App()
 
@@ -10,10 +11,10 @@ app
   .get('/*', (res, req) => {
     res.end('Hello World!')
   })
-  .listen(port, (token) => {
+  .listen(host, port, (token) => {
     if (token) {
-      console.log('Listening at http://localhost:' + port)
+      console.log(`Listening at http://${host}:${port}`)
     } else {
-      console.log('Failed listening at http://localhost:' + port)
+      console.log(`Failed listening at http://${host}:${port}`)
     }
   })
