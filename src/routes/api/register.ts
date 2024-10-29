@@ -28,7 +28,7 @@ async function storeUsers(userinfo: UserInfo) {
   //@ts-ignore
   const connection = mysql.createConnection(connections.readwrite)
   const sql = `INSERT INTO users (email, password, nickname) VALUES (?, ?, ?)`
-  console.log('SQL: ' + sql + '\nUserInfo: ' + JSON.stringify(userinfo))
+  console.log('UserInfo: ' + JSON.stringify(userinfo))
   try {
     connection.execute(sql, [userinfo.email, userinfo.password, userinfo.nickname])
   } catch (error) {
