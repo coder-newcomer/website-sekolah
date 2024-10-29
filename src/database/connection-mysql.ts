@@ -4,7 +4,7 @@ interface ServerConfig {
   database: string
 }
 
-interface RoleConfig {
+interface Connections extends ServerConfig {
   user: string
   password: string
 }
@@ -16,32 +16,22 @@ const server: ServerConfig = {
   database: process.env.DB_NAME || 'website-sekolah',
 }
 
-const roles: Record<string, RoleConfig> = {
+const connections: Record<string, Connections> = {
   root: {
     user: 'root',
     password: process.env.DB_ROOT_PASSWORD || '', // TODO: Set up secure password
+    ...server,
   },
-  lvl1: {
-    user: `${server.database}-1`,
-    password: process.env.DB_FIRST_PASSWORD || '1234', // Use env var for prod
+  readonly: {
+    user: `app_readonly`,
+    password: process.env.DB_FIRST_PASSWORD || 'App_ReadOnly@1234', // Use env var for prod
+    ...server,
   },
-  lvl2: {
-    user: `${server.database}-1`,
-    password: process.env.DB_SECOND_PASSWORD || '5678', // Use env var for prod
+  readwrite: {
+    user: `app_readwrite`,
+    password: process.env.DB_SECOND_PASSWORD || 'App_ReadWrite@1234', // Use env var for prod
+    ...server,
   },
-}
-
-
-const connections = {}
-for (const role in roles) {
-  //@ts-ignore just list of connections
-  connections[role] = {
-    host: server.host,
-    port: server.port,
-    user: roles[role].user,
-    password: roles[role].password,
-    database: server.database,
-  }
 }
 
 export default connections

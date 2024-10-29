@@ -6,8 +6,7 @@
     "build": "vinxi build",
     "start": "vinxi start",
     "version": "vinxi version",
-    "database:server": "tsx ./src/database/server.ts",
-    "database:mysql": "tsx ./src/database/mysql-connect.ts"
+    "database:server": "node src/database/server.cjs"
   },
   "dependencies": {
     "@sifrr/server": "^0.0.9",
@@ -27,6 +26,7 @@
   "devDependencies": {
     "@types/bcrypt": "^5.0.2",
     "@types/node": "^22.7.7",
+    "glob": "^11.0.0",
     "tsx": "^4.19.1"
   }
 }

@@ -2,7 +2,7 @@
 -- Host:                         127.0.0.1
 -- Server version:               11.5.2-MariaDB-log - mariadb.org binary distribution
 -- Server OS:                    Win64
--- HeidiSQL Version:             12.8.0.6945
+-- HeidiSQL Version:             12.8.0.6908
 -- --------------------------------------------------------
 
 /*!40101 SET @OLD_CHARACTER_SET_CLIENT=@@CHARACTER_SET_CLIENT */;
@@ -21,13 +21,13 @@ USE `website-sekolah`;
 
 -- Dumping structure for table website-sekolah.comments
 CREATE TABLE IF NOT EXISTS `comments` (
-  `id` int(11) NOT NULL,
+  `id` int NOT NULL,
   `content` text DEFAULT NULL,
   `author` varchar(64) DEFAULT NULL,
-  `upvote` int(11) DEFAULT NULL,
-  `downvote` int(11) DEFAULT NULL,
+  `upvote` int DEFAULT NULL,
+  `downvote` int DEFAULT NULL,
   PRIMARY KEY (`id`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_uca1400_ai_ci;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 -- Data exporting was unselected.
 
@@ -35,21 +35,21 @@ CREATE TABLE IF NOT EXISTS `comments` (
 CREATE TABLE IF NOT EXISTS `media` (
   `UUID` char(36) NOT NULL,
   `name` varchar(255) NOT NULL,
-  `tags` longtext NOT NULL CHECK (json_valid(`tags`)),
-  `path` longtext NOT NULL CHECK (json_valid(`path`)),
+  `tags` longtext CHARACTER SET utf8mb4 NOT NULL CHECK (json_valid(`tags`)),
+  `path` longtext CHARACTER SET utf8mb4 NOT NULL CHECK (json_valid(`path`)),
   PRIMARY KEY (`UUID`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_uca1400_ai_ci;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 -- Data exporting was unselected.
 
 -- Dumping structure for table website-sekolah.quotes
 CREATE TABLE IF NOT EXISTS `quotes` (
-  `id` int(11) NOT NULL,
+  `id` int NOT NULL,
   `content` text DEFAULT NULL,
   `author` varchar(64) DEFAULT NULL,
-  `upvote` int(11) DEFAULT NULL,
+  `upvote` int DEFAULT NULL,
   PRIMARY KEY (`id`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_uca1400_ai_ci;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 -- Data exporting was unselected.
 
@@ -70,9 +70,9 @@ CREATE TABLE IF NOT EXISTS `students` (
   `father_job` varchar(50) DEFAULT NULL,
   `mother_job` varchar(50) DEFAULT NULL,
   `previous_school` varchar(50) DEFAULT NULL,
-  `photo` int(11) DEFAULT NULL,
+  `photo` int DEFAULT NULL,
   PRIMARY KEY (`nis`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_uca1400_ai_ci;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 -- Data exporting was unselected.
 
@@ -88,38 +88,37 @@ CREATE TABLE IF NOT EXISTS `teachers` (
   `position` varchar(50) DEFAULT NULL,
   `phone` varchar(20) DEFAULT NULL,
   `highest_education` varchar(50) DEFAULT NULL,
-  `photo` int(11) DEFAULT NULL,
+  `photo` int DEFAULT NULL,
   PRIMARY KEY (`nip`) USING BTREE
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_uca1400_ai_ci;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 -- Data exporting was unselected.
 
 -- Dumping structure for table website-sekolah.users
 CREATE TABLE IF NOT EXISTS `users` (
   `email` varchar(255) NOT NULL,
-  `password` varchar(255) NOT NULL DEFAULT '',
+  `password` varchar(60) NOT NULL DEFAULT '',
   `nickname` varchar(64) NOT NULL,
-  `role` enum('user','admin') NOT NULL DEFAULT 'user',
-  `comments` longtext DEFAULT NULL CHECK (json_valid(`comments`)),
+  `comments` longtext CHARACTER SET utf8mb4 DEFAULT NULL CHECK (json_valid(`comments`)),
   PRIMARY KEY (`email`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_uca1400_ai_ci;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 -- Data exporting was unselected.
 
 -- Dumping structure for table website-sekolah.webposts
 CREATE TABLE IF NOT EXISTS `webposts` (
-  `id` int(11) NOT NULL DEFAULT 0,
+  `id` int NOT NULL DEFAULT 0,
   `title` varchar(255) DEFAULT NULL,
   `author` varchar(64) DEFAULT NULL,
   `date` timestamp NULL DEFAULT NULL,
   `content` longtext DEFAULT NULL,
-  `tags` longtext DEFAULT NULL CHECK (json_valid(`tags`)),
-  `views` int(11) DEFAULT NULL,
-  `upvote` int(11) DEFAULT NULL,
-  `downvote` int(11) DEFAULT NULL,
-  `comments` longtext DEFAULT NULL CHECK (json_valid(`comments`)),
+  `tags` longtext CHARACTER SET utf8mb4 DEFAULT NULL CHECK (json_valid(`tags`)),
+  `views` int DEFAULT NULL,
+  `upvote` int DEFAULT NULL,
+  `downvote` int DEFAULT NULL,
+  `comments` longtext CHARACTER SET utf8mb4 DEFAULT NULL CHECK (json_valid(`comments`)),
   PRIMARY KEY (`id`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_uca1400_ai_ci;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 -- Data exporting was unselected.
 
