@@ -3,7 +3,7 @@ import type { APIEvent } from '@solidjs/start/server'
 import bcrypt from 'bcrypt'
 import mysql from 'mysql2'
 
-import connections from '~/database/connection-mysql'
+import connections from '~/lib/database/connection-mysql'
 
 // Variables
 let data
@@ -34,6 +34,7 @@ async function storeUsers(userinfo: UserInfo) {
   } catch (error) {
     console.warn(error)
   }
+  connection.end()
 }
 
 export async function POST({ request }: APIEvent) {

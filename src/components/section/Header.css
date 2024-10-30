@@ -1,0 +1,41 @@
+header .container {
+  padding-block: 1em;
+}
+
+header a {
+  text-decoration: none;
+}
+
+header a h2 {
+  margin: 0 12px;
+  color: rgb(0 50 90)
+}
+
+img[alt="Logo Karnas"] {
+  height: 42px;
+  width: auto;
+}
+
+.container {
+  padding: 0 16px;
+  margin: 0 auto;
+}
+
+.container-horizontal {
+  display: flex;
+  flex-wrap: nowrap;
+  align-items: center;
+  justify-content: center;
+}
+
+.menu-button::part(base) {
+  border: none;
+}
+
+.menu-item::part(base) {
+  font-size: small;
+}
+
+.menu-item::part(checked-icon), .menu-item::part(submenu-icon){
+  width: 8px;
+}

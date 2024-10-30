@@ -9,6 +9,7 @@
     "database:server": "node src/database/server.cjs"
   },
   "dependencies": {
+    "@shoelace-style/shoelace": "^2.18.0",
     "@sifrr/server": "^0.0.9",
     "@solidjs/meta": "^0.29.4",
     "@solidjs/router": "^0.14.10",

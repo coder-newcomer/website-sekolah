@@ -25,10 +25,12 @@ const fs = require('fs')
 const path = require('path')
 const os = require('os')
 const glob = require('glob')
+const mysql = require('mysql2')
+const connections = require('./connection-mysql')
 
 const sqlFilePath = path.join('./src/database/website_sekolah.sql') // Path to your SQL file
 
-let mariadbProcess // To hold reference to the mysqld process for cleanup
+let mariadbProcess // To hold reference to the mariadbd process for cleanup
 
 /**
  * Detects the MariaDB installation path based on platform-specific directories.
@@ -36,23 +38,19 @@ let mariadbProcess // To hold reference to the mysqld process for cleanup
  * @returns {string} The path to the MariaDB binary or throws an error if not found.
  */
 function detectMariaDBPath() {
-  const platform = os.platform()
   const possiblePatterns = []
 
-  if (platform === 'win32') {
-    possiblePatterns.push(
-      'C:/Program Files/MariaDB*/bin/mysqld.exe',
-      'C:/Program Files/MySQL*/bin/mysqld.exe'
-    )
-  } else if (platform === 'darwin') {
-    possiblePatterns.push('/usr/local/opt/mariadb*/bin/mysqld')
-  } else if (platform === 'linux') {
-    possiblePatterns.push('/usr/bin/mysqld', '/usr/local/bin/mysqld')
-  } else if (platform === 'android') {
-    possiblePatterns.push('~/../usr/bin/mysqld', '~/../usr/local/bin/mysqld')
-  } else {
-    console.error("We can't detect the MariaDB binary for your platform.")
-  }
+  switch (os.platform()) {
+      case 'win32':
+        possiblePatterns.push('C:/Program Files/MariaDB*/bin/mariadbd.exe')
+      case 'darwin':
+        possiblePatterns.push('/usr/local/opt/mariadb*/bin/mariadbd')
+      case 'linux':
+        possiblePatterns.push('/usr/bin/mariadbd', '/usr/local/bin/mariadbd')
+      case 'android':
+        possiblePatterns.push('~/../usr/bin/mariadbd', '~/../usr/local/bin/mariadbd')
+        break;
+    }
 
   for (const pattern of possiblePatterns) {
     const matches = glob.sync(pattern)
@@ -92,26 +90,12 @@ function startMariaDBServer(mariadbPath) {
  * @param {string} sqlFile - Path to the SQL file.
  */
 function importSQL(sqlFile) {
-  const mysqlCommand = os.platform() === 'win32' ? 'mysql.exe' : 'mysql'
-  const commandPath = detectMariaDBPath().replace('mysqld', mysqlCommand).replace('.exe.exe', '.exe')
-  
-
-  if (!fs.existsSync(sqlFile)) {
-    console.error(`SQL file not found: ${sqlFile}`)
-    return
-  }
-
-  console.log(`Importing SQL file ${sqlFile}...`)
-
-  execFile(commandPath, ['-u', 'root', '-p', '<', sqlFile], (error, stdout, stderr) => {
+  const connection = mysql.createConnection(connections.root)
+  connection.execute(`source ${sqlFile}`, (error) => {
     if (error) {
-      console.error(`Error importing SQL file: ${error.message}`)
-      return
+      console.warn(`SQL Import Error: ${error.message}`)
     }
-    if (stderr) {
-      console.error(`Import Error: ${stderr}`)
-    }
-    console.log(`SQL Import Result: ${stdout}`)
+    connection.end()
   })
 }
 
@@ -121,7 +105,7 @@ function importSQL(sqlFile) {
 function cleanupAndExit() {
   if (mariadbProcess) {
     console.log('Terminating MariaDB server...')
-    process.kill(mariadbProcess.pid) // Terminate the detached mysqld process
+    process.kill(mariadbProcess.pid) // Terminate the detached mariadbd process
   }
   process.exit()
 }
@@ -129,8 +113,7 @@ function cleanupAndExit() {
 // Main setup function
 async function setupMariaDB() {
   try {
-    const mariadbPath = detectMariaDBPath()
-    mariadbProcess = startMariaDBServer(mariadbPath)
+    mariadbProcess = startMariaDBServer(detectMariaDBPath())
 
     setTimeout(() => {
       importSQL(sqlFilePath)
