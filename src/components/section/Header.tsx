@@ -1,4 +1,4 @@
-import { dropdown, metadata } from '~/secret/metadata'
+import { dropdown, metadata } from '~/secret/config'
 import { For, onMount } from 'solid-js'
 
 import './Header.css'
@@ -31,7 +31,7 @@ export default function Header() {
                   </sl-menu>
                 </sl-dropdown>
               ) : (
-                <a href={dropdown[menu]}>
+                <a href={dropdown[menu]} tabindex='-1'>
                   <sl-button class='menu-button'>{menu}</sl-button>
                 </a>
               )

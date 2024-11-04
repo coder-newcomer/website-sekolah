@@ -16,8 +16,8 @@
 
 
 -- Dumping database structure for website-sekolah
-CREATE DATABASE IF NOT EXISTS `website-sekolah` /*!40100 DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_uca1400_ai_ci */;
-USE `website-sekolah`;
+-- CREATE DATABASE IF NOT EXISTS `website-sekolah` /*!40100 DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_uca1400_ai_ci */;
+-- USE `website-sekolah`;
 
 -- Dumping structure for table website-sekolah.comments
 CREATE TABLE IF NOT EXISTS `comments` (

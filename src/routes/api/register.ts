@@ -3,7 +3,7 @@ import type { APIEvent } from '@solidjs/start/server'
 import bcrypt from 'bcrypt'
 import mysql from 'mysql2'
 
-import connections from '~/lib/database/connection-mysql'
+import { connections } from '~/secret/config'
 
 // Variables
 let data
@@ -55,26 +55,26 @@ export async function POST({ request }: APIEvent) {
 }
 
 function validateUserInfo(userInfo: UserInfo) {
-  const { email, password, nickname } = userInfo;
+  const { email, password, nickname } = userInfo
 
   // Validate email format
-  const emailPattern = /^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$/;
+  const emailPattern = /^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$/
   if (!emailPattern.test(email)) {
-    return { valid: false, message: 'Invalid email format.' };
+    return { valid: false, message: 'Invalid email format.' }
   }
 
   // Validate password length
   if (password.length > 32) {
-    return { valid: false, message: 'Password cannot be more than 32 characters long.' };
+    return { valid: false, message: 'Password cannot be more than 32 characters long.' }
   }
 
   // Validate nickname length
   if (nickname.length > 64) {
-    return { valid: false, message: 'Nickname cannot be more than 64 characters long.' };
+    return { valid: false, message: 'Nickname cannot be more than 64 characters long.' }
   }
 
   // If all validations pass
-  return { valid: true, message: 'Validation successful.' };
+  return { valid: true, message: 'Validation successful.' }
 }
 
 /*

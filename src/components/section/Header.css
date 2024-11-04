@@ -28,6 +28,10 @@ img[alt="Logo Karnas"] {
   justify-content: center;
 }
 
+.menu-button {
+  margin: 0 6px;
+}
+
 .menu-button::part(base) {
   border: none;
 }

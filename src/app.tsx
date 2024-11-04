@@ -5,7 +5,7 @@ import { Suspense } from 'solid-js'
 
 import './app.css'
 import Header from './components/section/Header'
-import { metadata } from './secret/metadata'
+import { metadata } from './secret/config'
 
 export default function App() {
   return (
