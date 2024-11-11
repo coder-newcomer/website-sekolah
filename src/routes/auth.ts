@@ -1,48 +1,33 @@
 'use server'
-
 import type { APIEvent } from '@solidjs/start/server'
-import { MariaDBPool } from '~/lib/backend/db'
-import { connections } from '~/lib/backend/server.config'
-import crypto from 'crypto'
+import { useSession } from 'vinxi/http'
 
-function validateRegistrationData(data: any): string | null {
-  const validations = [
-    { condition: !data.email || typeof data.email !== 'string', message: 'Email must be a string' },
-    { condition: data.email.length >= 255, message: 'Email must be less than 255 characters' },
-    {
-      condition: !data.password || typeof data.password !== 'string',
-      message: 'Password must be a string',
-    },
-    {
-      condition: data.password.length >= 255,
-      message: 'Password must be less than 255 characters',
-    },
-    {
-      condition: !data.nickname || typeof data.nickname !== 'string',
-      message: 'Nickname must be a string',
-    },
-    { condition: data.nickname.length >= 64, message: 'Nickname must be less than 64 characters' },
-  ]
-  
-  for (const { condition, message } of validations) {
-    if (condition) return message
+import { db } from '~/lib/backend/server.config'
+import { comparePassword, hashPassword, type SQLError } from '~/lib/backend/db'
+
+const DB = await db()
+function validateRegistrationData(data: {
+  type: 'register' | 'login' | 'update'
+  email: string
+  password: string
+  nickname?: string
+}): string | null {
+  console.log(
+    'Email:',
+    data.email,
+    'is',
+    !/^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$/.test(data.email) ? 'invaild' : 'valid'
+  )
+  if (!/^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$/.test(data.email)) {
+    return 'Invalid email'
+  } else if (data.password.length < 4 || data.password.length > 64) {
+    return 'Password length must be between 4 and 64 characters'
+  } else if (data.type === 'register' && data.nickname!.length > 64) {
+    return 'Nickname length must be less than 64 characters'
+  } else {
+    return null
   }
-  
-  return null
 }
-
-const rootDB = new MariaDBPool(
-  { ...connections().server, ...connections().users.root },
-  { name: connections().database }
-)
-const readonlyDB = new MariaDBPool(
-  { ...connections().server, ...connections().users.readonly },
-  { name: connections().database }
-)
-const readwriteDB = new MariaDBPool(
-  { ...connections().server, ...connections().users.readwrite },
-  { name: connections().database }
-)
 
 // Register
 export async function POST({ request }: APIEvent) {
@@ -50,33 +35,122 @@ export async function POST({ request }: APIEvent) {
   let data
   try {
     data = await request.json()
-    const dataLog = data.password.replace(/./g, '*') // Replace password with asterisks
-    console.log('[auth] POST:', dataLog)
   } catch (error) {
-    return new Response('400 Bad Request: Invalid JSON format', { status: 400 })
+    return new Response(JSON.stringify({ error: 'ERR_JSON', message: error }), { status: 400 })
   }
 
   // Validate the request data
-  const validationError = validateRegistrationData(data)
+  const validationError = validateRegistrationData({
+    type: 'register',
+    ...data,
+  })
   if (validationError) {
-    return new Response(`400 Bad Request: ${validationError}`, { status: 400 })
+    return new Response(JSON.stringify({ error: 'ERR_VALIDATION', message: validationError }), {
+      status: 400,
+    })
   }
 
   try {
-    await initDB()
-    data.password = hashPassword(data.password)
-    readwriteDB.insert('users', data)
+    if (DB) {
+      data.password = await hashPassword(data.password)
+      await DB.dbReadWrite.insert('users', data)
+      return new Response(
+        JSON.stringify({ error: 'OK', message: 'User registered successfully. Now you can login' }),
+        { status: 201 }
+      )
+    } else {
+      throw new Error('Database is not initialized')
+    }
   } catch (error) {
-    console.error('Registration error:', error)
-    return new Response('500 Internal Server Error', { status: 500 })
+    const ERR = error as SQLError
+    console.error('[auth] POST:', ERR)
+    return new Response(
+      JSON.stringify({ error: ERR.code, message: ERR.sqlMessage || ERR.message }),
+      {
+        status: 500,
+      }
+    )
   }
-
-  return new Response('200 Test', { status: 200 })
 }
 
-export function GET() {
+// Login
+export async function GET({ request }: APIEvent) {
   // Login
-  // ...
+  const url = new URL(request.url)
+  const data = {
+    email: url.searchParams.get('email'),
+    password: url.searchParams.get('password'),
+  } as { email: string; password: string }
+  console.log('[auth] GET:', data)
+
+  // Validate the request data
+  const validationError = validateRegistrationData({
+    type: 'login',
+    ...data,
+  })
+  if (validationError) {
+    return new Response(JSON.stringify({ error: 'ERR_VALIDATION', message: validationError }), {
+      status: 400,
+    })
+  }
+
+  try {
+    if (DB) {
+      const user = await DB.dbReadOnly.select('users', 'email = "' + data.email + '"')
+      if (user.length > 0) {
+        console.log('[auth] User found:', user[0])
+        if (await comparePassword(data.password!, user[0].password)) {
+          console.log('[auth] Credential matched')
+          const session = await getSession()
+          await session.update((d) => {
+            d.userId = user[0].id
+          })
+          return new Response(
+            JSON.stringify({
+              error: 'OK',
+              message: 'Login successful',
+            }),
+            {
+              status: 200,
+            }
+          )
+        } else {
+          console.log('[auth] Credential not matched')
+          return new Response(
+            JSON.stringify({
+              error: 'ERR_CRED_INVALID',
+              message: 'Invalid email or password',
+            }),
+            {
+              status: 401,
+            }
+          )
+        }
+      } else {
+        console.log(`[auth] User not found for ${data.email}`)
+        return new Response(
+          JSON.stringify({
+            error: 'ERR_USER_NOT_FOUND',
+            message: 'Account did not exist, please register',
+          }),
+          {
+            status: 404,
+          }
+        )
+      }
+    } else {
+      throw new Error('Database is not initialized')
+    }
+  } catch (error) {
+    const ERR = error as SQLError
+    console.error('[auth] GET:', ERR)
+    return new Response(
+      JSON.stringify({ error: ERR.code, message: ERR.sqlMessage || ERR.message }),
+      {
+        status: 500,
+      }
+    )
+  }
 }
 
 export function PATCH() {
@@ -89,41 +163,10 @@ export function DELETE() {
   // ...
 }
 
-
-async function initDB() {
-  // Initialize the database
-  await rootDB.init()
-  await rootDB.makeRoles([connections().users.readonly, connections().users.readwrite])
-  return rootDB
-}
-
-function hashPassword(password: string): string {
-  if (!password) {
-    throw new Error('Password cannot be empty')
-  }
-
-  const salt = crypto.randomBytes(16).toString('hex') // Generate a random salt
-  const iterations = 100000 // Number of iterations
-  const keyLength = 64 // Length of the derived key
-  const digest = 'sha512' // Hashing algorithm
-
-  const hash = crypto.pbkdf2Sync(password, salt, iterations, keyLength, digest).toString('hex')
-
-  // Return the salt and hash together
-  return `${salt}:${hash}`
-}
-
-function verifyPassword(plainPassword: string, hashedPassword: string): boolean {
-  if (!plainPassword || !hashedPassword) {
-    throw new Error('Both plain password and hashed password must be provided')
-  }
-
-  const [salt, originalHash] = hashedPassword.split(':') // Extract salt and hash
-  const iterations = 100000 // Must match the original iterations
-  const keyLength = 64 // Must match the original key length
-  const digest = 'sha512' // Must match the original hashing algorithm
-
-  const hash = crypto.pbkdf2Sync(plainPassword, salt, iterations, keyLength, digest).toString('hex')
-
-  return hash === originalHash // Compare the hashes
+function getSession() {
+  return useSession({
+    password:
+      process.env.SESSION_SECRET ??
+      'A SUPER SECRET KEY PASSPHRASE THAT MUST BE LONGER THAN 32 CHARACTERS!!!',
+  })
 }

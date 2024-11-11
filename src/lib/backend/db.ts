@@ -25,10 +25,10 @@ export type { DBUser, DBConnection, DBRole, DBPermission }
 
 export class MariaDBPool {
   private poolConfig: DBConnection
-  private db: { name: string; force?: boolean }
+  private db: { dbname: string; force?: boolean }
   private pool: Pool | null = null
 
-  constructor(poolConfig: DBConnection, db: { name: string; force?: boolean }) {
+  constructor(poolConfig: DBConnection, db: { dbname: string; force?: boolean }) {
     this.poolConfig = poolConfig
     this.db = db
   }
@@ -41,12 +41,12 @@ export class MariaDBPool {
 
     try {
       if (this.db.force) {
-        await this.execute(`DROP DATABASE IF EXISTS \`${this.db.name}\``)
-        console.log(`Database ${this.db.name} dropped.`)
+        await this.execute(`DROP DATABASE IF EXISTS \`${this.db.dbname}\``)
+        console.log(`[db] Database ${this.db.dbname} dropped.`)
       }
 
-      await this.execute(`CREATE DATABASE IF NOT EXISTS \`${this.db.name}\``)
-      console.log(`Database ${this.db.name} is ready.`)
+      await this.execute(`CREATE DATABASE IF NOT EXISTS \`${this.db.dbname}\``)
+      console.log(`[db] Database ${this.db.dbname} is ready.`)
     } catch (error) {
       console.error(`Database initialization error:`, error)
       throw error
@@ -63,12 +63,12 @@ export class MariaDBPool {
         port: this.poolConfig.port,
         user: this.poolConfig.user,
         password: this.poolConfig.password,
-        database: this.db.name,
+        database: this.db.dbname,
         waitForConnections: true,
         connectionLimit: 10, // Adjust based on expected load
         queueLimit: 0,
       })
-      console.log(`Connection pool created for database ${this.db.name}`)
+      console.log(`[db] Connection pool created for database ${this.db.dbname}`)
     }
   }
 
@@ -79,7 +79,7 @@ export class MariaDBPool {
     if (this.pool) {
       await this.pool.end()
       this.pool = null
-      console.log('Connection pool closed.')
+      console.log('[db] Connection pool closed.')
     }
   }
 
@@ -92,7 +92,7 @@ export class MariaDBPool {
       const [rows] = await this.pool!.execute(query, params)
       return rows as RowDataPacket[]
     } catch (error) {
-      console.error('Execution error:')
+      // console.error('Execution error:') console.error('Execution error:') // For better logging, handle error using `try...catch` every use
       throw error
     }
   }
@@ -149,38 +149,94 @@ export class MariaDBPool {
       if (role.delete) {
         // Drop the role if specified
         await this.execute(`DROP USER IF EXISTS '${role.user}'@'${role.access}'`)
-        console.log(`Dropped user: ${role.user}@${role.access}`)
+        console.log(`[db] Dropped user: ${role.user}@${role.access}`)
       } else {
         // Create role if it doesn't exist
         const forceCreate = role.force ? ' OR REPLACE' : ' IF NOT EXISTS'
         await this.execute(
           `CREATE USER${forceCreate} '${role.user}'@'${role.access}' IDENTIFIED BY '${role.password}'`
         )
-        console.log(`Created user: ${role.user}@${role.access}`)
+        console.log(`[db] Created user: ${role.user}@${role.access}`)
 
         // Manage permissions
         if ('grant' in role || 'revoke' in role) {
           const permissionRole = role as DBPermission
 
-          // Revoke permissions
-          for (const revokeQuery of permissionRole.revoke) {
-            await this.execute(
-              `REVOKE ${revokeQuery} ON \`${this.db.name}\`.* FROM '${role.user}'@'${role.access}'`
-            )
-            console.log(`Revoked ${revokeQuery} from ${role.user}@${role.access}`)
+          // Prepare revoke and grant queries
+          const revokeQueries =
+            permissionRole.revoke.length > 0
+              ? `REVOKE ${permissionRole.revoke.join(', ')} ON \`${this.db.dbname}\`.* FROM '${
+                  role.user
+                }'@'${role.access}'`
+              : ''
+
+          const grantQueries =
+            permissionRole.grant.length > 0
+              ? `GRANT ${permissionRole.grant.join(', ')} ON \`${this.db.dbname}\`.* TO '${
+                  role.user
+                }'@'${role.access}'`
+              : ''
+
+          // Execute revoke and grant in a single statement if both exist
+          if (revokeQueries && grantQueries) {
+            await this.execute(`${grantQueries}; ${revokeQueries}`) // Prioritize revoking
+          } else if (revokeQueries) {
+            await this.execute(revokeQueries)
+          } else if (grantQueries) {
+            await this.execute(grantQueries)
           }
 
-          // Grant permissions
-          for (const grantQuery of permissionRole.grant) {
-            if (!permissionRole.revoke.includes(grantQuery)) {
-              await this.execute(
-                `GRANT ${grantQuery} ON \`${this.db.name}\`.* TO '${role.user}'@'${role.access}'`
-              )
-              console.log(`Granted ${grantQuery} to ${role.user}@${role.access}`)
-            }
+          if (revokeQueries) {
+            console.log(`[db] Revoked ${permissionRole.revoke.join(', ')} from ${role.user}@${role.access}`)
+          }
+          if (grantQueries) {
+            console.log(`[db] Granted ${permissionRole.grant.join(', ')} to ${role.user}@${role.access}`)
           }
         }
       }
     }
   }
+}
+
+export interface SQLError extends Error {
+  code: string
+  errno: number
+  sql: string
+  sqlState: string
+  sqlMessage: string
+}
+
+/** Password utils */
+
+import { randomBytes, scrypt as _scrypt } from 'crypto'
+import { promisify } from 'util'
+
+const scrypt = promisify(_scrypt)
+
+const HASHING_ALGORITHM = 'sha256' // You can choose another algorithm if needed
+const KEY_LENGTH = 64 // Length of the derived key
+const ITERATIONS = 100000 // Number of iterations for scrypt
+
+export async function hashPassword(password: string): Promise<string> {
+  // Generate a random salt
+  const salt = randomBytes(16).toString('hex')
+
+  // Hash the password using scrypt
+  const hashedBuffer = await scrypt(password, salt, KEY_LENGTH) as Buffer
+
+  // Combine salt and hash into a single string
+  const hashedPassword = `${salt}:${hashedBuffer.toString('hex')}`
+
+  return hashedPassword
+}
+
+export async function comparePassword(password: string, hashedPassword: string): Promise<boolean> {
+  // Split the hashed password into salt and hash
+  const [salt, originalHash] = hashedPassword.split(':')
+
+  // Hash the incoming password with the same salt
+  const hashedBuffer = await scrypt(password, salt, KEY_LENGTH) as Buffer
+
+  // Compare the hashed buffer with the original hash
+  return originalHash === hashedBuffer.toString('hex')
 }
