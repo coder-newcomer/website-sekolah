@@ -5,30 +5,18 @@
     "dev": "vinxi dev",
     "build": "vinxi build",
     "start": "vinxi start",
-    "version": "vinxi version",
-    "database:server": "node src/database/server.cjs"
+    "version": "vinxi version"
   },
   "dependencies": {
     "@shoelace-style/shoelace": "^2.18.0",
-    "@sifrr/server": "^0.0.9",
     "@solidjs/meta": "^0.29.4",
-    "@solidjs/router": "^0.14.10",
-    "@solidjs/start": "^1.0.9",
-    "bcrypt": "^5.1.1",
-    "mysql2": "^3.11.3",
-    "sequelize": "^6.37.4",
-    "solid-js": "^1.9.2",
-    "uWebSockets.js": "github:uNetworking/uWebSockets.js#v20.49.0",
+    "@solidjs/router": "^0.15.1",
+    "@solidjs/start": "^1.0.10",
+    "mysql2": "^3.11.4",
+    "solid-js": "^1.9.3",
     "vinxi": "^0.4.3"
   },
   "engines": {
     "node": ">=18"
-  },
-  "devDependencies": {
-    "@types/bcrypt": "^5.0.2",
-    "@types/node": "^22.7.7",
-    "dotenv": "^16.4.5",
-    "glob": "^11.0.0",
-    "tsx": "^4.19.1"
   }
 }

@@ -1,0 +1,12 @@
+{
+  "configurations": [
+    {
+      "type": "node",
+      "request": "launch",
+      "name": "Debug current file using `tsx`",
+      "runtimeExecutable": "tsx",
+      "cwd": "${workspaceFolder}",
+      "program": "${file}"
+    }
+  ]
+}

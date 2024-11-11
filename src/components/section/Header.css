@@ -1,5 +1,13 @@
+header {
+  box-shadow: 0px 0px 32px -8px rgba(0, 0, 0, 0.25);
+  background-color: rgb(255 255 255);
+  position: sticky;
+  top: 0;
+  z-index: 1;
+}
+
 header .container {
-  padding-block: 1em;
+  padding-block: 12px;
 }
 
 header a {
@@ -8,10 +16,10 @@ header a {
 
 header a h2 {
   margin: 0 12px;
-  color: rgb(0 50 90)
+  color: rgb(0 50 90);
 }
 
-img[alt="Logo Karnas"] {
+img[alt='Logo Karnas'] {
   height: 42px;
   width: auto;
 }
@@ -28,6 +36,15 @@ img[alt="Logo Karnas"] {
   justify-content: center;
 }
 
+.container .container-horizontal:focus {
+  border-radius: var(--sl-input-border-radius-medium);
+}
+
+.container .container-horizontal:focus-visible {
+  outline: var(--sl-focus-ring);
+  outline-offset: var(--sl-focus-ring-offset);
+}
+
 .menu-button {
   margin: 0 6px;
 }
@@ -40,6 +57,25 @@ img[alt="Logo Karnas"] {
   font-size: small;
 }
 
-.menu-item::part(checked-icon), .menu-item::part(submenu-icon){
+.menu-item::part(checked-icon),
+.menu-item::part(submenu-icon) {
   width: 8px;
+}
+
+#avatar {
+  --size: 36px;
+}
+
+#avatar::part(icon) {
+  cursor: pointer;
+}
+
+sl-card::part(body) {
+  padding: 0;
+}
+
+#login-container,
+#register-container {
+  width: 16rem;
+  padding: 0 1.25rem;
 }
